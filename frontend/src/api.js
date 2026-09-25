@@ -1,18 +1,22 @@
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 async function requestJson(url, options = {}) {
   try {
     const response = await fetch(url, options);
+
     const contentType = response.headers.get("content-type") || "";
+
     const payload = contentType.includes("application/json")
       ? await response.json()
       : await response.text();
 
     if (!response.ok) {
       const message =
-        typeof payload === "object" && payload.detail
+        typeof payload === "object" && payload?.detail
           ? payload.detail
           : "The backend returned an error.";
+
       throw new Error(message);
     }
 
@@ -20,9 +24,10 @@ async function requestJson(url, options = {}) {
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Backend is not running. Please start FastAPI on port 8000."
+        "Unable to connect to the backend. Please check that the FastAPI server is running."
       );
     }
+
     throw error;
   }
 }
@@ -31,6 +36,7 @@ export async function getEnvironmentalData(variable = null) {
   const query = variable
     ? `?variable=${encodeURIComponent(variable)}`
     : "";
+
   return requestJson(`${API_BASE_URL}/data${query}`);
 }
 
@@ -45,7 +51,9 @@ export async function generateSyntheticData(seed = null) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ seed: generatedSeed }),
+    body: JSON.stringify({
+      seed: generatedSeed,
+    }),
   });
 }
 
@@ -57,7 +65,10 @@ export async function getIcebergs() {
   return requestJson(`${API_BASE_URL}/icebergs`);
 }
 
-export async function predictIceberg(icebergId, hours = [6, 12, 24, 48]) {
+export async function predictIceberg(
+  icebergId,
+  hours = [6, 12, 24, 48]
+) {
   return requestJson(`${API_BASE_URL}/icebergs/predict`, {
     method: "POST",
     headers: {
